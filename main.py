@@ -10,9 +10,7 @@ def main():
         )
     parser.add_argument('--files', nargs='+', required=True,
                         help='Пути к CSV файлам с данными о сотрудниках')
-    parser.add_argument('--report', required=True,
-                        choices=['performance'],
-                        help='Тип отчета для генерации')
+    parser.add_argument('--report', required=True)
     try:
         args = parser.parse_args()
     except SystemExit:
