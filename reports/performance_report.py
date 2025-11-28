@@ -2,7 +2,7 @@ from typing import List, Dict
 
 from tabulate import tabulate
 
-from utils.file_reader import FileReader
+from utils.file_reader import EmployeeData, FileReader
 
 
 class PerformanceReport:
@@ -15,7 +15,7 @@ class PerformanceReport:
 
     def generate(self) -> None:
         """Генерирует отчет по эффективности."""
-        self.data = FileReader.read_files(self.file_paths)
+        self.data: List[EmployeeData] = FileReader.read_files(self.file_paths)
         position_performance = {}
         for employee in self.data:
             position = employee['position']

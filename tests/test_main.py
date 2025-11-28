@@ -17,6 +17,18 @@ class TestMain:
                 mock_instance.generate.assert_called_once()
                 mock_instance.display.assert_called_once()
 
+    def test_main_file_read_error(self, capsys):
+        """Тест с ошибкой чтения файла."""
+        test_args = ['main.py', '--files', 'test_data/valid_data.csv', '--report', 'performance']
+        with patch('sys.argv', test_args):
+            with patch('sys.exit') as mock_exit:
+                with patch('builtins.open', side_effect=IOError('Read error')):
+                    with patch('reports.performance_report.FileReader.read_files'):
+                        main()
+                        mock_exit.assert_called_once_with(1)
+                        captured = capsys.readouterr()
+                        assert 'невозможно прочитать файл' in captured.out
+
     def test_main_missing_arguments(self, capsys):
         """Тест вызова без обязательных аргументов."""
         test_args = ['main.py']
@@ -48,14 +60,28 @@ class TestMain:
             captured = capsys.readouterr()
             assert 'неизвестный тип отчета' in captured.out
 
-    def test_main_file_read_error(self, capsys):
-        """Тест с ошибкой чтения файла."""
-        test_args = ['main.py', '--files', 'test_data/valid_data.csv', '--report', 'performance']
-        with patch('sys.argv', test_args):
-            with patch('sys.exit') as mock_exit:
-                with patch('builtins.open', side_effect=IOError('Read error')):
-                    with patch('reports.performance_report.FileReader.read_files'):
-                        main()
-                        mock_exit.assert_called_once_with(1)
-                        captured = capsys.readouterr()
-                        assert 'невозможно прочитать файл' in captured.out
+@pytest.mark.parametrize("test_args, expected_exit_code, expected_message", [
+    (
+        ['main.py', '--files', 'test_data/valid_data.csv', '--report', 'unknown'],
+        1,
+        'неизвестный тип отчета'
+    ),
+    (
+        ['main.py', '--files', 'nonexistent.csv', '--report', 'performance'],
+        1,
+        'не найден'
+    ),
+    (
+        ['main.py', '--report', 'performance'],
+        1, 
+        'неправильные аргументы'
+    ),
+])
+def test_main_argument_errors(test_args, expected_exit_code, expected_message, capsys):
+    """Тест различных ошибок аргументов(заменяет три отчета выше)."""
+    with patch('sys.argv', test_args):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == expected_exit_code
+        captured = capsys.readouterr()
+        assert expected_message in captured.out
